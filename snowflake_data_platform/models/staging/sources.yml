@@ -1,0 +1,18 @@
+version: 2
+
+sources:
+  - name: raw
+    database: DATA_ENGINEERING_LAB
+    schema: RAW
+    tables:
+      - name: customers_raw
+        identifier: CUSTOMERS_RAW
+        description: "Original customer records loaded from CSV."
+
+      - name: orders_raw
+        identifier: ORDERS_RAW
+        description: "Original order records loaded from CSV."
+
+      - name: payments_raw
+        identifier: PAYMENTS_RAW
+        description: "Original payment records loaded from CSV."

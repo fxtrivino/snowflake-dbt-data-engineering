@@ -1,0 +1,126 @@
+
+version: 2
+
+models:
+  - name: customers
+    description: "Validated customer records."
+
+    columns:
+      - name: CUSTOMER_ID
+        description: "Unique customer identifier."
+        data_tests:
+          - unique
+          - not_null
+
+      - name: EMAIL
+        data_tests:
+          - not_null
+
+      - name: COUNTRY
+        data_tests:
+          - not_null
+
+      - name: UPDATED_AT
+        data_tests:
+          - not_null
+
+  - name: orders
+    description: "Validated incremental orders."
+
+    columns:
+      - name: ORDER_ID
+        data_tests:
+          - unique
+          - not_null
+
+      - name: CUSTOMER_ID
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('customers')
+                field: CUSTOMER_ID
+
+      - name: TOTAL_AMOUNT
+        data_tests:
+          - not_null
+
+      - name: UPDATED_AT
+        data_tests:
+          - not_null
+
+  - name: payments
+    description: "Validated incremental payments."
+
+    columns:
+      - name: PAYMENT_ID
+        data_tests:
+          - unique
+          - not_null
+
+      - name: ORDER_ID
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('orders')
+                field: ORDER_ID
+
+      - name: AMOUNT
+        data_tests:
+          - not_null
+
+      - name: UPDATED_AT
+        data_tests:
+          - not_null
+  - name: customer_sales
+    description: "Métricas de ventas y cobros por cliente."
+    columns:
+      - name: CUSTOMER_ID
+        data_tests:
+          - unique
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('customers')
+                field: CUSTOMER_ID
+
+      - name: TOTAL_ORDERS
+        data_tests:
+          - not_null
+
+      - name: CONFIRMED_SALES_AMOUNT
+        data_tests:
+          - not_null
+
+      - name: PAID_AMOUNT
+        data_tests:
+          - not_null
+
+      - name: OUTSTANDING_AMOUNT
+        data_tests:
+          - not_null
+
+  - name: sales_daily
+    description: "Métricas de ventas y cobros agrupadas por fecha de orden."
+    columns:
+      - name: ORDER_DATE
+        data_tests:
+          - unique
+          - not_null
+
+      - name: TOTAL_ORDERS
+        data_tests:
+          - not_null
+
+      - name: CONFIRMED_SALES_AMOUNT
+        data_tests:
+          - not_null
+
+      - name: PAID_AMOUNT
+        data_tests:
+          - not_null
+
+      - name: OUTSTANDING_AMOUNT
+        data_tests:
+          - not_null

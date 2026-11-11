@@ -1,0 +1,28 @@
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# dbt generated files
+**/target/
+**/dbt_packages/
+**/logs/
+
+# Credentials
+.env
+.env.*
+!.env.example
+profiles.yml
+**/profiles.yml
+*.pem
+*.key
+*.p8
+
+# macOS
+.DS_Store
+
+# IDE
+.idea/
+.vscode/

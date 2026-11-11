@@ -1,0 +1,48 @@
+{{ config(
+    materialized='table',
+    schema='MARTS',
+    alias='SALES_DAILY'
+) }}
+
+WITH payments_by_order AS (
+    SELECT
+        ORDER_ID,
+        SUM(CASE WHEN STATUS = 'COMPLETED'
+                 THEN AMOUNT ELSE 0 END) AS PAID_AMOUNT,
+        SUM(CASE WHEN STATUS = 'PENDING'
+                 THEN AMOUNT ELSE 0 END) AS PENDING_PAYMENT_AMOUNT
+    FROM {{ ref('payments') }}
+    GROUP BY ORDER_ID
+),
+
+orders_enriched AS (
+    SELECT
+        o.ORDER_ID,
+        o.ORDER_DATE,
+        o.STATUS,
+        o.TOTAL_AMOUNT,
+        COALESCE(p.PAID_AMOUNT, 0) AS PAID_AMOUNT,
+        COALESCE(p.PENDING_PAYMENT_AMOUNT, 0) AS PENDING_PAYMENT_AMOUNT
+    FROM {{ ref('orders') }} o
+    LEFT JOIN payments_by_order p
+        ON o.ORDER_ID = p.ORDER_ID
+)
+
+SELECT
+    ORDER_DATE,
+    COUNT(*) AS TOTAL_ORDERS,
+    COUNT_IF(STATUS = 'CONFIRMED') AS CONFIRMED_ORDERS,
+    COALESCE(SUM(
+        CASE WHEN STATUS = 'CONFIRMED'
+             THEN TOTAL_AMOUNT ELSE 0 END
+    ), 0) AS CONFIRMED_SALES_AMOUNT,
+    SUM(PAID_AMOUNT) AS PAID_AMOUNT,
+    SUM(PENDING_PAYMENT_AMOUNT) AS PENDING_PAYMENT_AMOUNT,
+    SUM(
+        CASE WHEN STATUS = 'CONFIRMED'
+             THEN GREATEST(TOTAL_AMOUNT - PAID_AMOUNT, 0)
+             ELSE 0 END
+    ) AS OUTSTANDING_AMOUNT,
+    CURRENT_TIMESTAMP() AS UPDATED_AT
+FROM orders_enriched
+GROUP BY ORDER_DATE

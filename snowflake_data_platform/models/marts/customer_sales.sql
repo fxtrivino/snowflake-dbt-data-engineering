@@ -1,0 +1,55 @@
+{{ config(
+    materialized='table',
+    schema='MARTS',
+    alias='CUSTOMER_SALES'
+) }}
+
+WITH payments_by_order AS (
+    SELECT
+        ORDER_ID,
+        SUM(CASE WHEN STATUS = 'COMPLETED'
+                 THEN AMOUNT ELSE 0 END) AS PAID_AMOUNT,
+        SUM(CASE WHEN STATUS = 'PENDING'
+                 THEN AMOUNT ELSE 0 END) AS PENDING_PAYMENT_AMOUNT
+    FROM {{ ref('payments') }}
+    GROUP BY ORDER_ID
+),
+
+orders_enriched AS (
+    SELECT
+        o.ORDER_ID,
+        o.CUSTOMER_ID,
+        o.STATUS,
+        o.TOTAL_AMOUNT,
+        COALESCE(p.PAID_AMOUNT, 0) AS PAID_AMOUNT,
+        COALESCE(p.PENDING_PAYMENT_AMOUNT, 0) AS PENDING_PAYMENT_AMOUNT
+    FROM {{ ref('orders') }} o
+    LEFT JOIN payments_by_order p
+        ON o.ORDER_ID = p.ORDER_ID
+)
+
+SELECT
+    c.CUSTOMER_ID,
+    c.NAME,
+    c.COUNTRY,
+    COUNT(o.ORDER_ID) AS TOTAL_ORDERS,
+    COUNT_IF(o.STATUS = 'CONFIRMED') AS CONFIRMED_ORDERS,
+    COALESCE(SUM(
+        CASE WHEN o.STATUS = 'CONFIRMED'
+             THEN o.TOTAL_AMOUNT ELSE 0 END
+    ), 0) AS CONFIRMED_SALES_AMOUNT,
+    COALESCE(SUM(o.PAID_AMOUNT), 0) AS PAID_AMOUNT,
+    COALESCE(SUM(o.PENDING_PAYMENT_AMOUNT), 0) AS PENDING_PAYMENT_AMOUNT,
+    COALESCE(SUM(
+        CASE WHEN o.STATUS = 'CONFIRMED'
+             THEN GREATEST(o.TOTAL_AMOUNT - o.PAID_AMOUNT, 0)
+             ELSE 0 END
+    ), 0) AS OUTSTANDING_AMOUNT,
+    CURRENT_TIMESTAMP() AS UPDATED_AT
+FROM {{ ref('customers') }} c
+LEFT JOIN orders_enriched o
+    ON c.CUSTOMER_ID = o.CUSTOMER_ID
+GROUP BY
+    c.CUSTOMER_ID,
+    c.NAME,
+    c.COUNTRY

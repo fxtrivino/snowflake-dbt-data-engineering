@@ -1,0 +1,5 @@
+
+SELECT *
+FROM {{ ref('invalid_customers') }}
+WHERE VALIDATION_STATUS = 'VALID'
+   OR VALIDATION_STATUS IS NULL

@@ -1,0 +1,52 @@
+
+version: 2
+
+models:
+  - name: customers_by_country
+    description: >
+      Agregación de clientes vigentes por país.
+      Utiliza CORE.CUSTOMERS como fuente.
+
+    columns:
+      - name: COUNTRY
+        description: País del cliente.
+        data_tests:
+          - not_null
+          - unique
+
+      - name: TOTAL_CUSTOMERS
+        description: Número de clientes vigentes en el país.
+        data_tests:
+          - not_null
+
+      - name: UPDATED_AT
+        description: Fecha y hora de actualización del modelo.
+
+  - name: customer_history
+    description: >
+      Vista analítica del historial SCD Type 2.
+      Cada registro representa una versión de un cliente.
+
+    columns:
+      - name: CUSTOMER_ID
+        description: Identificador del cliente.
+        data_tests:
+          - not_null
+
+      - name: VERSION_NUMBER
+        description: Número secuencial de versión del cliente.
+        data_tests:
+          - not_null
+
+      - name: VALID_FROM
+        description: Inicio de vigencia de la versión.
+        data_tests:
+          - not_null
+
+      - name: VALID_TO
+        description: Fin de vigencia; NULL para la versión actual.
+
+      - name: IS_CURRENT
+        description: Indica si la versión está vigente.
+        data_tests:
+          - not_null
